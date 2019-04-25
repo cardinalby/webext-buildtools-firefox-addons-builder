@@ -44,7 +44,7 @@ const buildResult = await builder.build();
 ``` 
 
 ### Options
-Options object described in [declarations/options.d.ts](declarations/options.d.ts)
+Options object described in [declarations/options.d.ts](declarations/options.d.ts#L55)
 
 [See](https://github.com/cardinalby/webext-buildtools-integrated-builder/blob/master/logMethod.md) how to get `logMethod` for pretty output.
 
@@ -78,7 +78,7 @@ especially for offline distribution. If not specified, new extension will be add
 for every build (not recommended)
 
 *Required options:* `signXpi.extensionId` (recommended), `signXpi.xpiOutPath` 
-(if not temporary file required), apiAccess` <br>
+(if not temporary file required), `apiAccess` <br>
 
 *Require methods:* `requirePublishedExt()` <br>
 *Assets:* 

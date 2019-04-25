@@ -1,0 +1,12 @@
+language: node_js
+node_js:
+- '10'
+deploy:
+  provider: npm
+  email: cardinalby@gmail.com
+  skip_cleanup: true
+  api_key:
+    secure: JUxbhIPQQihbdW3KBYR9Exb9FGzYLJpGE22T/ftLYXWqBJVHQ67AeQabfgcaLEZtasAXKcCoHmQLWJcPYqHC+EL+6+BWDRB16TrDP/efRkuTjxP7FQYNDOAhhvoU5NaJsOQ4A2W7bI97iuPJhiARry2zW2ZMxALTMjDk86JWOdoRb0wSs4GBxAmDPwcljkao2G/PJQ6WZ1t0rhMdVG4ZinS6y8L8isYFtRMro7rdLUQRIE+84HA6aZeUBIaYubYYRvTsfBMsinvFUItJNYYIUQ0u4yNjEo94j1xbj6eRU9dWLU/FWDnFm3YmfDInH21ck9vQrz25oWYhtZtfptBYcBkSUd6sTKtSeJq3n/Llj82XVbsXKCK3/5LUVuLqBhGH/rXcH8yjQPUuBJo5aNhB0NLvQt/vxADWG7YBKnr9CxrOr/JQGQe4Fw/BUSnRGh82ZhdIYFCPuYUW4TINyQHMtTXovmVgZKrhGHMcquZGWih7hHB4sLESd8GN1C6m9EsiHQtyDaGrgkXeBjXxC9TCvIoFaEH+7KY07v7qc8ImX//5CX/c5njLhLhcULeHSvrzcKuDuE4aCQT+v5n4yWHUBzhWy/1+TRUwH7/LvJcmfpnZnieRBdIhzT5kvIsmrI/IgAqRzZyxpJ1fpdQoS1iF7HbM14HZFJ4C6Vz5yPE8k1k=
+  on:
+    tags: true
+    repo: cardinalby/webext-buildtools-firefox-addons-builder

@@ -34,7 +34,9 @@ const options = { ... }; // see description below
 const logMethod = console.log;
 const builder = new FirefoxAddonsBuilder(options, logMethod);
 
+// Optional, can be extracted from zip
 builder.setInputManifest(await fs.readJson('./ext_dir/package.json'));
+
 builder.setInputZipBuffer(await fs.read('./packed.zip'));
 
 builder.requireDeployedExt();
@@ -53,7 +55,7 @@ To setup API access you need to generate and specify `jwtIssuer`, `jwtSecret` in
 You can create them at [https://addons.mozilla.org/en-US/developers/addon/api/key/](https://addons.mozilla.org/en-US/developers/addon/api/key/)
 
 ### Inputs
-1. **`setInputManifest(...)`**. Required. Object with parsed extension's `package.json`.
+1. **`setInputManifest(...)`**. Object with parsed extension's `package.json`. Will be extracted from zip if not specified.
 2. **`setInputZipBuffer(...)`**. Required. Buffer with zipped extension dir.
 
 You can use [webext-buildtools-dir-reader-mw](https://www.npmjs.com/package/webext-buildtools-dir-reader-mw)

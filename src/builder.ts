@@ -8,14 +8,16 @@ import signAddon = require('sign-addon');
 import { ISignAddonOptions, ISigningResult } from 'sign-addon';
 import { Readable } from 'stream';
 import { ISimpleBuilder } from 'webext-buildtools-builder-types';
-import { AbstractSimpleBuilder, BufferBuildAsset, createTempDir, FileBuildAsset } from 'webext-buildtools-utils';
+import {
+    AbstractSimpleBuilder,
+    BufferBuildAsset,
+    createTempDir,
+    FileBuildAsset,
+    extractManifestFromZipBuffer,
+    IManifestObject
+} from 'webext-buildtools-utils';
 import { IFirefoxAddonsOptions } from '../declarations/options';
 import { FirefoxAddonsBuildResult, FirefoxAddonsExtIdAsset } from './buildResult';
-
-export interface IWebextManifest {
-    name: string;
-    version: string;
-}
 
 // noinspection JSUnusedGlobalSymbols
 /**
@@ -28,7 +30,7 @@ export class FirefoxAddonsBuilder
     public static readonly TARGET_NAME = 'firefox-addons-deploy';
 
     protected _inputZipBuffer?: Buffer;
-    protected _inputManifest?: IWebextManifest;
+    protected _inputManifest?: IManifestObject;
     protected _outDeployedExtRequired: boolean = false;
     protected _outSignedXpiFileRequirement?: boolean;
     protected _outSignedXpiBufferRequired: boolean = false;
@@ -43,7 +45,7 @@ export class FirefoxAddonsBuilder
         return this;
     }
 
-    public setInputManifest(manifest: IWebextManifest): this {
+    public setInputManifest(manifest: IManifestObject): this {
         if (!manifest.name || !manifest.version) {
             throw Error('Invalid manifest object, id and name fields are required');
         }
@@ -88,7 +90,14 @@ export class FirefoxAddonsBuilder
             return result;
         }
 
-        const manifest: IWebextManifest = this._inputManifest as IWebextManifest;
+        if (!this._inputManifest && this._inputZipBuffer) {
+            this._logWrapper.info('Manifest input is not set, reading from zip...');
+            this._inputManifest = await extractManifestFromZipBuffer(this._inputZipBuffer);
+            this._logWrapper.info(
+                `Manifest extracted. Extension name: '${this._inputManifest.name}', ` +
+                `version: ${this._inputManifest.version}`);
+        }
+        const manifest = this._inputManifest as IManifestObject;
         
         const stream = new Readable();
         stream.push(this._inputZipBuffer as Buffer);
@@ -192,9 +201,6 @@ export class FirefoxAddonsBuilder
 
     protected validateInputs() {
         const errors = [];
-        if (!this._inputManifest) {
-            errors.push("manifest isn't specified");
-        }
         if (!this._inputZipBuffer) {
             errors.push("zip buffer path isn't specified");
         }

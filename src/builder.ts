@@ -190,9 +190,6 @@ export class FirefoxAddonsBuilder
             if (!this._options.signXpi) {
                 throw new Error('Signed xpi required but signXpi option is not set');
             }
-            if (!this._options.signXpi.extensionId) {
-                throw new Error('Signed xpi required but signXpi.extensionId option is not set');
-            }
             if (this._outSignedXpiFileRequirement === false && !this._options.signXpi.xpiOutPath) {
                 throw new Error('Not temporary signed xpi file required, but signXpi.xpiOutPath option is not set');
             }

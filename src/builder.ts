@@ -1,12 +1,9 @@
-///<reference path="../external_declarations/firefox-extension-deploy.d.ts"/>
 ///<reference path="../external_declarations/sign-addon.d.ts"/>
 
-import firefoxDeploy = require('firefox-extension-deploy');
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { signAddon } from 'sign-addon';
 import { ISignAddonOptions, ISigningResult } from 'sign-addon';
-import { Readable } from 'stream';
 import { ISimpleBuilder } from 'webext-buildtools-builder-types';
 import {
     AbstractSimpleBuilder,
@@ -18,6 +15,7 @@ import {
 } from 'webext-buildtools-utils';
 import { IFirefoxAddonsOptions } from '../declarations/options';
 import { FirefoxAddonsBuildResult, FirefoxAddonsExtIdAsset } from './buildResult';
+import {deployAddon} from "./addonsApi/deployAddon";
 
 // noinspection JSUnusedGlobalSymbols
 /**
@@ -98,23 +96,15 @@ export class FirefoxAddonsBuilder
                 `version: ${this._inputManifest.version}`);
         }
         const manifest = this._inputManifest as IManifestObject;
-        
-        const stream = new Readable();
-        stream.push(this._inputZipBuffer as Buffer);
-        stream.push(null);
-        // firefox-extension-deploy internally expects 'path' property (like in stream created via fs.createReadStream)
-        // in stream to get file name
-        // @ts-ignore
-        stream.path = '/emulate/path/extension.zip';
 
         if (this._outDeployedExtRequired && this._options.deploy) {
             this._logWrapper.info(`Deploying '${manifest.version}' version of '${manifest.name}'...`);
-            await firefoxDeploy({
+            await deployAddon({
                 id: this._options.deploy.extensionId,
                 version: manifest.version,
                 issuer: this._options.api.jwtIssuer,
                 secret: this._options.api.jwtSecret,
-                src: stream
+                src: this._inputZipBuffer as Buffer
             });
             result.getAssets().deployedExtStoreId = new FirefoxAddonsExtIdAsset(manifest.version);
         }

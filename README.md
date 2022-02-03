@@ -46,7 +46,7 @@ const buildResult = await builder.build();
 ``` 
 
 ### Options
-Options object described in [declarations/options.d.ts](declarations/options.d.ts#L55)
+Options object described in [declarations/options.d.ts](./declarations/options.d.ts)
 
 [See](https://github.com/cardinalby/webext-buildtools-integrated-builder/blob/master/logMethod.md) how to get `logMethod` for pretty output.
 
@@ -85,3 +85,12 @@ for every build (not recommended)
 *Require methods:* `requirePublishedExt()` <br>
 *Assets:* 
 `const extId = buildResult.getAssets().deployedExtStoreId.getValue()` 
+
+### Errors
+
+Package exports the following error classes, which can be thrown if Deployed 
+extension was requested:
+
+* `SameVersionAlreadyUploadedError` if you try to upload already existing version
+* `UnauthorizedError`: `jwtIssuer`, `jwtSecret` options are invalid
+* `ValidationError` Firefox Addons validation rejected your extension

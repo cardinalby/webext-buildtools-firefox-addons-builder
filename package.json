@@ -1,6 +1,6 @@
 {
   "name": "webext-buildtools-firefox-addons-builder",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "webext-buildtools builder for deploying to Firefox Addons store and signing xpi files",
   "main": "dist",
   "keywords": [
@@ -23,22 +23,25 @@
   "author": "cardinalby",
   "license": "MIT",
   "files": [
-    "dist/**/*.d.ts",
-    "dist/**/*.js",
-    "declarations/**/*.d.ts",
-    "external_declarations/**/*.d.ts",
-    "LICENSE"
+    "/dist/**/*.d.ts",
+    "/dist/**/*.js",
+    "/declarations/**/*.d.ts",
+    "/external_declarations/**/*.d.ts",
+    "/LICENSE"
   ],
   "dependencies": {
-    "firefox-extension-deploy": "^1.1.2",
+    "superagent": "^7.1.1",
+    "jsonwebtoken": "^8.5.1",
     "sign-addon": "^3.10.0",
     "fs-extra": "^7.0.1",
     "webext-buildtools-utils": "^1.0.14"
   },
   "devDependencies": {
     "webext-buildtools-builder-types": "^1.0.10",
-    "@types/node": "^10.12.20",
+    "@types/node": "^16.11.22",
     "@types/fs-extra": "^5.0.5",
+    "@types/superagent": "^4.1.15",
+    "@types/jsonwebtoken": "^8.5.8",
     "tslint": "^6.1.2",
     "tslint-config-prettier": "^1.17.0",
     "typescript": "^3.9.10"

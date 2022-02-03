@@ -41,6 +41,8 @@ declare module 'sign-addon' {
         success: boolean;
         id: string;
         downloadedFiles: string[];
+        errorCode: "SERVER_FAILURE"|"ADDON_NOT_AUTO_SIGNED"|"VALIDATION_FAILED",
+        errorDetails: string|undefined,
     }
 
     export function signAddon(options: ISignAddonOptions): Promise<ISigningResult>;

@@ -16,6 +16,7 @@ import {
 import { IFirefoxAddonsOptions } from '../declarations/options';
 import { FirefoxAddonsBuildResult, FirefoxAddonsExtIdAsset } from './buildResult';
 import {deployAddon} from "./addonsApi/deployAddon";
+import {SameVersionAlreadyUploadedError} from "./errors/SameVersionAlreadyUploadedError";
 
 // noinspection JSUnusedGlobalSymbols
 /**
@@ -142,7 +143,7 @@ export class FirefoxAddonsBuilder
                 this._logWrapper.info(`Signing '${inputZipFile}'...`);
 
                 const signResult = await signAddon(signAddonOptions);
-                this.validateSignResult(signResult);
+                this.validateSignResult(signResult, this._options.signXpi.extensionId || '');
 
                 result.getAssets().signedExtStoreId = new FirefoxAddonsExtIdAsset(signResult.id);
 
@@ -195,9 +196,14 @@ export class FirefoxAddonsBuilder
         }
     }
 
-    protected validateSignResult(signResult: ISigningResult) {
+    protected validateSignResult(signResult: ISigningResult, version: string) {
         if (!signResult.success) {
             this._logWrapper.error('Signing error', signResult);
+            if (signResult.errorCode === 'SERVER_FAILURE' &&
+                signResult.errorDetails?.includes('Version already exists')
+            ) {
+                throw new SameVersionAlreadyUploadedError(version, signResult.errorDetails);
+            }
             throw new Error('Signing error');
         }
 

@@ -23,7 +23,8 @@ export async function deployAddon(options: FirefoxDeployOptionsInterface): Promi
                 encodeURIComponent(options.version) + '/'
             )
             .set('Authorization', `JWT ${token}`)
-            .attach('upload', options.src)).body.pk;
+            .field('upload', options.src)
+        ).body.pk;
     } catch (err) {
         switch (err.response.status) {
             case 401:

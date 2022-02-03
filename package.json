@@ -31,7 +31,7 @@
   ],
   "dependencies": {
     "firefox-extension-deploy": "^1.1.2",
-    "sign-addon": "^3.9.0",
+    "sign-addon": "^3.10.0",
     "fs-extra": "^7.0.1",
     "webext-buildtools-utils": "^1.0.14"
   },

@@ -4,7 +4,7 @@
 import firefoxDeploy = require('firefox-extension-deploy');
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import signAddon = require('sign-addon');
+import { signAddon } from 'sign-addon';
 import { ISignAddonOptions, ISigningResult } from 'sign-addon';
 import { Readable } from 'stream';
 import { ISimpleBuilder } from 'webext-buildtools-builder-types';
@@ -109,7 +109,6 @@ export class FirefoxAddonsBuilder
 
         if (this._outDeployedExtRequired && this._options.deploy) {
             this._logWrapper.info(`Deploying '${manifest.version}' version of '${manifest.name}'...`);
-
             await firefoxDeploy({
                 id: this._options.deploy.extensionId,
                 version: manifest.version,
@@ -117,7 +116,6 @@ export class FirefoxAddonsBuilder
                 secret: this._options.api.jwtSecret,
                 src: stream
             });
-
             result.getAssets().deployedExtStoreId = new FirefoxAddonsExtIdAsset(manifest.version);
         }
 
@@ -152,7 +150,8 @@ export class FirefoxAddonsBuilder
                 }
 
                 this._logWrapper.info(`Signing '${inputZipFile}'...`);
-                const signResult = await signAddon.default(signAddonOptions);
+
+                const signResult = await signAddon(signAddonOptions);
                 this.validateSignResult(signResult);
 
                 result.getAssets().signedExtStoreId = new FirefoxAddonsExtIdAsset(signResult.id);

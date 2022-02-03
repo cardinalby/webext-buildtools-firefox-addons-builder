@@ -43,5 +43,9 @@ declare module 'sign-addon' {
         downloadedFiles: string[];
     }
 
-    export default function signAddon(options: ISignAddonOptions): Promise<ISigningResult>;
+    export function signAddon(options: ISignAddonOptions): Promise<ISigningResult>;
+    export function signAddonAndExit(
+        options: ISignAddonOptions,
+        params?: { systemProcess: NodeJS.Process, throwError: boolean, logger: (d: any) => void}
+    ): Promise<void>
 }

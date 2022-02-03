@@ -17,13 +17,14 @@ export async function deployAddon(options: FirefoxDeployOptionsInterface): Promi
 
     try {
         uploadId = (await request
-            .put('https://addons.mozilla.org/api/v5/addons/' +
-                encodeURIComponent(options.id) +
-                '/versions/' +
-                encodeURIComponent(options.version) + '/'
-            )
-            .set('Authorization', `JWT ${token}`)
-            .field('upload', options.src)
+                .put('https://addons.mozilla.org/api/v5/addons/' +
+                    encodeURIComponent(options.id) +
+                    '/versions/' +
+                    encodeURIComponent(options.version) + '/'
+                )
+                .set('Authorization', `JWT ${token}`)
+                .set('Content-Type', 'multipart/form-data')
+                .attach('upload', options.src, {filename: 'extension.zip', contentType: 'application/zip'})
         ).body.pk;
     } catch (err) {
         switch (err.response.status) {

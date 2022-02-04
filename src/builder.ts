@@ -106,7 +106,7 @@ export class FirefoxAddonsBuilder
                 issuer: this._options.api.jwtIssuer,
                 secret: this._options.api.jwtSecret,
                 src: this._inputZipBuffer as Buffer
-            });
+            }, this._logWrapper);
             result.getAssets().deployedExtStoreId = new FirefoxAddonsExtIdAsset(manifest.version);
         }
 

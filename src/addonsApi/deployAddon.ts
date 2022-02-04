@@ -7,17 +7,22 @@ import {DeployResultInterface} from "./DeployResultInterface";
 import {ValidationError} from "../errors/ValidationError";
 import {Duration} from "./Duration";
 import {PollTimedOutError} from "../errors/PollTimedOutError";
+import {LoggerWrapper} from "webext-buildtools-utils";
 
 function sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export async function deployAddon(options: FirefoxDeployOptionsInterface): Promise<DeployResultInterface> {
+export async function deployAddon(
+    options: FirefoxDeployOptionsInterface,
+    logger: LoggerWrapper
+): Promise<DeployResultInterface> {
     let uploadId: string;
 
     const token = prepareJwt(options.issuer, options.secret);
 
     try {
+        logger.info(`Uploading version ${options.version}...`);
         uploadId = (await request
                 .put('https://addons.mozilla.org/api/v5/addons/' +
                     encodeURIComponent(options.id) +
@@ -48,6 +53,10 @@ export async function deployAddon(options: FirefoxDeployOptionsInterface): Promi
             throw new PollTimedOutError(uploadId, 'Polling timed out');
         }
         try {
+            const timeLeftLog = timeLeft !== undefined
+                ? ` (${Math.floor(timeLeft / 1000)} seconds)`
+                : '';
+            logger.info(`Polling status of ${uploadId} upload${timeLeftLog}...`);
             const req = request
                 .get('https://addons.mozilla.org/api/v5/addons/' +
                     encodeURIComponent(options.id) +
@@ -63,12 +72,16 @@ export async function deployAddon(options: FirefoxDeployOptionsInterface): Promi
             }
             response = (await req).body;
         } catch (err) {
+            if (err.timeout) {
+                throw new PollTimedOutError(uploadId, 'Polling timed out');
+            }
             if (err.response.status === 401) {
                 throw new UnauthorizedError('Polling failed: 401 Unauthorized: ' + err.response.body.detail);
             }
             throw new Error('Polling failed: Status ' + err.response.status + ': ' + err.response.body.error);
         }
         if (response.processed) {
+            logger.info('Item was processed. ', response);
             if (!response.valid) {
                 throw new ValidationError('Validation failed: ' + response.validation_url + ' ' +
                     JSON.stringify(response.validation_results));

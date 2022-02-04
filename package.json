@@ -1,6 +1,6 @@
 {
   "name": "webext-buildtools-firefox-addons-builder",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "webext-buildtools builder for deploying to Firefox Addons store and signing xpi files",
   "main": "dist",
   "keywords": [

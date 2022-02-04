@@ -88,9 +88,11 @@ for every build (not recommended)
 
 ### Errors
 
-Package exports the following error classes, which can be thrown if Deployed 
-extension was requested:
+Package exports the following error classes, which can be thrown:
 
 * `SameVersionAlreadyUploadedError` if you try to upload already existing version
-* `UnauthorizedError`: `jwtIssuer`, `jwtSecret` options are invalid
-* `ValidationError` Firefox Addons validation rejected your extension
+* `UnauthorizedError`: For "Deployed extension" output.
+  `jwtIssuer`, `jwtSecret` Options are invalid.
+* `ValidationError` For "Deployed extension" output. Firefox Addons validation rejected your extension
+* `PollTimedOutError` For "Deployed extension" output. Polling uploaded item status was timed out.
+Your extension will be probably published later.

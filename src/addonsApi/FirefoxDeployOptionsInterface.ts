@@ -9,4 +9,6 @@ export interface FirefoxDeployOptionsInterface {
     version: string;
     // Zip-packed extension dir
     src: Buffer;
+
+    pollTimeoutMs?: number
 }

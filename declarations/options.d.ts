@@ -65,6 +65,12 @@ export interface IFirefoxAddonsOptions {
          * Id of extension which was already uploaded to Firefox Addons
          */
         extensionId: string;
+        /**
+         * Number of milliseconds to wait until uploaded item becomes processed
+         * Throw PollTimedOutError in case of timeout
+         * @default undefined
+         */
+        pollTimeoutMs?: number
     },
 
     signXpi?: {

@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.com/cardinalby/webext-buildtools-firefox-addons-builder.svg?branch=master)](https://travis-ci.com/cardinalby/webext-buildtools-firefox-addons-builder)
+[![npm-publish](https://github.com/cardinalby/webext-buildtools-firefox-addons-builder/actions/workflows/npm-publish.yml/badge.svg)](https://github.com/cardinalby/webext-buildtools-firefox-addons-builder/actions/workflows/npm-publish.yml)
+
 ### Introduction
 *webext-buildtools* builder which allows you deploy extension (packed to zip) 
 to Firefox Addons, and sign xpi file (for offline distribution).
@@ -9,9 +10,7 @@ If you need a **complete solution** for Web Extension build/deploy, go to
 To read what are *webext-buildtools* and *builders* go to 
 [webext-buildtools-builder-types](https://github.com/cardinalby/webext-buildtools-builder-types) repo.
 
-Builder is based on 
-[firefox-extension-deploy](https://www.npmjs.com/package/firefox-extension-deploy) and
-[sign-addon](https://www.npmjs.com/package/sign-addon) packages.
+[sign-addon](https://www.npmjs.com/package/sign-addon) package is used for signing under the hood.
 
 ### Installation
 `npm install webext-buildtools-firefox-addons-builder`

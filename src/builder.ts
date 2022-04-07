@@ -29,6 +29,7 @@ export class FirefoxAddonsBuilder
     public static readonly TARGET_NAME = 'firefox-addons-deploy';
 
     protected _inputZipBuffer?: Buffer;
+    protected _inputSourcesZipBuffer?: Buffer;
     protected _inputManifest?: IManifestObject;
     protected _outDeployedExtRequired: boolean = false;
     protected _outSignedXpiFileRequirement?: boolean;
@@ -41,6 +42,12 @@ export class FirefoxAddonsBuilder
     // noinspection JSUnusedGlobalSymbols
     public setInputBuffer(buffer: Buffer): this {
         this._inputZipBuffer = buffer;
+        return this;
+    }
+
+    // noinspection JSUnusedGlobalSymbols
+    public setInputSourcesZipBuffer(buffer: Buffer): this {
+        this._inputSourcesZipBuffer = buffer;
         return this;
     }
 
@@ -105,7 +112,8 @@ export class FirefoxAddonsBuilder
                 version: manifest.version,
                 issuer: this._options.api.jwtIssuer,
                 secret: this._options.api.jwtSecret,
-                src: this._inputZipBuffer as Buffer
+                addonZip: this._inputZipBuffer as Buffer,
+                addonSourcesZip: this._inputSourcesZipBuffer
             }, this._logWrapper);
             result.getAssets().deployedExtStoreId = new FirefoxAddonsExtIdAsset(manifest.version);
         }
@@ -189,7 +197,7 @@ export class FirefoxAddonsBuilder
     protected validateInputs() {
         const errors = [];
         if (!this._inputZipBuffer) {
-            errors.push("zip buffer path isn't specified");
+            errors.push("zip buffer isn't specified");
         }
         if (errors.length > 0) {
             throw Error('Inputs validation error: ' + errors.join(', '));

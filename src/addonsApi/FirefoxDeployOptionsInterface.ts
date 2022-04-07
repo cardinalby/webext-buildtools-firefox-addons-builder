@@ -8,7 +8,9 @@ export interface FirefoxDeployOptionsInterface {
     // Semver version
     version: string;
     // Zip-packed extension dir
-    src: Buffer;
+    addonZip: Buffer;
+    // Addon sources needed for Addons Store reviewers
+    addonSourcesZip?: Buffer;
 
     pollTimeoutMs?: number
 }

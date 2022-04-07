@@ -23,16 +23,21 @@ export async function deployAddon(
 
     try {
         logger.info(`Uploading version ${options.version}...`);
-        uploadId = (await request
-                .put('https://addons.mozilla.org/api/v5/addons/' +
-                    encodeURIComponent(options.id) +
-                    '/versions/' +
-                    encodeURIComponent(options.version) + '/'
-                )
-                .set('Authorization', `JWT ${token}`)
-                .set('Content-Type', 'multipart/form-data')
-                .attach('upload', options.src, {filename: 'extension.zip', contentType: 'application/zip'})
-        ).body.pk;
+        const requestObj = request
+            .post('https://addons.mozilla.org/api/v5/addons/' +
+                encodeURIComponent(options.id) +
+                '/versions/' +
+                encodeURIComponent(options.version) + '/'
+            )
+            .set('Authorization', `JWT ${token}`)
+            .set('Content-Type', 'multipart/form-data')
+            .attach('upload', options.addonZip, {filename: 'extension.zip', contentType: 'application/zip'});
+        if (options.addonSourcesZip) {
+            requestObj
+                .attach('source', options.addonSourcesZip, {filename: 'sources.zip', contentType: 'application/zip'});
+        }
+
+        uploadId = (await requestObj).body.pk;
     } catch (err) {
         switch (err.response.status) {
             case 401:

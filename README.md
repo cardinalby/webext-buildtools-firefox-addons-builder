@@ -55,7 +55,8 @@ You can create them at [https://addons.mozilla.org/en-US/developers/addon/api/ke
 
 ### Inputs
 1. **`setInputManifest(...)`**. Object with parsed extension's `package.json`. Will be extracted from zip if not specified.
-2. **`setInputZipBuffer(...)`**. Required. Buffer with zipped extension dir.
+2. **`setInputZipBuffer(...)`**. **Required**. Buffer with zipped extension dir.
+3. **`setInputSourcesZipBuffer(...)`**. Buffer with zipped dir containing source code of the extension. It's needed for admins for a review if your zipped extension contains minified code.
 
 You can use [webext-buildtools-dir-reader-mw](https://www.npmjs.com/package/webext-buildtools-dir-reader-mw)
 to generate needed inputs from extension directory.

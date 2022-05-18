@@ -1,6 +1,6 @@
 {
   "name": "webext-buildtools-firefox-addons-builder",
-  "version": "1.1.1",
+  "version": "2.0.0",
   "description": "webext-buildtools builder for deploying to Firefox Addons store and signing xpi files",
   "main": "dist",
   "keywords": [
@@ -30,22 +30,28 @@
     "/LICENSE"
   ],
   "dependencies": {
-    "superagent": "^7.1.1",
+    "superagent": "^7.1.3",
     "jsonwebtoken": "^8.5.1",
-    "sign-addon": "^3.10.0",
-    "fs-extra": "^7.0.1",
+    "sign-addon": "^4.0.1",
+    "fs-extra": "^10.1.0",
     "webext-buildtools-utils": "^1.0.15"
   },
   "devDependencies": {
     "webext-buildtools-builder-types": "^1.0.11",
     "@types/node": "^16.11.35",
-    "@types/fs-extra": "^5.0.5",
+    "@types/fs-extra": "^9.0.13",
     "@types/superagent": "^4.1.15",
     "@types/jsonwebtoken": "^8.5.8",
-    "typescript": "^3.9.10"
+    "zip-a-folder": "^1.1.3",
+    "dotenv": "^16.0.1",
+    "typescript": "^4.6.4",
+    "@types/jest": "^27.5.0",
+    "jest": "^28.1.0",
+    "ts-jest": "^28.0.1"
   },
   "scripts": {
     "build": "tsc",
+    "test": "jest",
     "prepare": "npm run build",
     "version": "git add -A src",
     "postversion": "git push && git push --tags"

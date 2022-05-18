@@ -1,4 +1,4 @@
-export class SameVersionAlreadyUploadedError extends Error {
+export class VersionAlreadyExistsError extends Error {
     private readonly _version: string;
 
     constructor(version: string, message?: string) {

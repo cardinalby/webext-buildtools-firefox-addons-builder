@@ -11,12 +11,13 @@ import {
     createTempDir,
     FileBuildAsset,
     extractManifestFromZipBuffer,
-    IManifestObject
+    IManifestObject, extractManifestFromZipFile
 } from 'webext-buildtools-utils';
 import { IFirefoxAddonsOptions } from '../declarations/options';
 import { FirefoxAddonsBuildResult, FirefoxAddonsExtIdAsset } from './buildResult';
 import {deployAddon} from "./addonsApi/deployAddon";
-import {SameVersionAlreadyUploadedError} from "./errors/SameVersionAlreadyUploadedError";
+import {VersionAlreadyExistsError} from "./errors/VersionAlreadyExistsError";
+import assert = require("assert");
 
 // noinspection JSUnusedGlobalSymbols
 /**
@@ -29,7 +30,9 @@ export class FirefoxAddonsBuilder
     public static readonly TARGET_NAME = 'firefox-addons-deploy';
 
     protected _inputZipBuffer?: Buffer;
+    protected _inputZipFilePath?: string;
     protected _inputSourcesZipBuffer?: Buffer;
+    protected _inputSourcesZipFilePath?: string;
     protected _inputManifest?: IManifestObject;
     protected _outDeployedExtRequired: boolean = false;
     protected _outSignedXpiFileRequirement?: boolean;
@@ -40,14 +43,26 @@ export class FirefoxAddonsBuilder
     }
 
     // noinspection JSUnusedGlobalSymbols
-    public setInputBuffer(buffer: Buffer): this {
+    public setInputZipBuffer(buffer: Buffer): this {
         this._inputZipBuffer = buffer;
+        return this;
+    }
+
+    // noinspection JSUnusedGlobalSymbols
+    public setInputZipFilePath(filePath: string): this {
+        this._inputZipFilePath = filePath;
         return this;
     }
 
     // noinspection JSUnusedGlobalSymbols
     public setInputSourcesZipBuffer(buffer: Buffer): this {
         this._inputSourcesZipBuffer = buffer;
+        return this;
+    }
+
+    // noinspection JSUnusedGlobalSymbols
+    public setInputSourcesZipFilePath(filePath: string): this {
+        this._inputSourcesZipFilePath = filePath;
         return this;
     }
 
@@ -96,26 +111,35 @@ export class FirefoxAddonsBuilder
             return result;
         }
 
-        if (!this._inputManifest && this._inputZipBuffer) {
+        if (!this._inputManifest && this.isSignedXpiRequired()) {
             this._logWrapper.info('Manifest input is not set, reading from zip...');
-            this._inputManifest = await extractManifestFromZipBuffer(this._inputZipBuffer);
+            if (this._inputZipBuffer) {
+                this._inputManifest = await extractManifestFromZipBuffer(this._inputZipBuffer);
+            } else if (this._inputZipFilePath) {
+                this._inputManifest = await extractManifestFromZipFile(this._inputZipFilePath);
+            } else {
+                throw new Error('_inputZipBuffer or _inputZipFilePath must be set');
+            }
             this._logWrapper.info(
                 `Manifest extracted. Extension name: '${this._inputManifest.name}', ` +
                 `version: ${this._inputManifest.version}`);
         }
-        const manifest = this._inputManifest as IManifestObject;
 
         if (this._outDeployedExtRequired && this._options.deploy) {
-            this._logWrapper.info(`Deploying '${manifest.version}' version of '${manifest.name}'...`);
-            await deployAddon({
+            const addonZip = (this._inputZipFilePath && fs.createReadStream(this._inputZipFilePath)) ||
+                this._inputZipBuffer;
+            assert(addonZip);
+            const deployResult = await deployAddon({
                 id: this._options.deploy.extensionId,
-                version: manifest.version,
+                channel: this._options.deploy.channel || 'listed',
                 issuer: this._options.api.jwtIssuer,
                 secret: this._options.api.jwtSecret,
-                addonZip: this._inputZipBuffer as Buffer,
-                addonSourcesZip: this._inputSourcesZipBuffer
+                addonZip: addonZip,
+                addonSourcesZip:
+                    (this._inputSourcesZipFilePath && fs.createReadStream(this._inputSourcesZipFilePath)) ||
+                    this._inputSourcesZipBuffer
             }, this._logWrapper);
-            result.getAssets().deployedExtStoreId = new FirefoxAddonsExtIdAsset(manifest.version);
+            result.getAssets().deployedExtStoreId = new FirefoxAddonsExtIdAsset(deployResult.guid);
         }
 
         if (this.isSignedXpiRequired()) {
@@ -132,8 +156,16 @@ export class FirefoxAddonsBuilder
 
         const tmpDownloadDir = await createTempDir('ff_xpi_signing');
         try {
-            const inputZipFile = path.join(tmpDownloadDir, 'unsigned_ext.zip');
-            await fs.writeFile(inputZipFile, this._inputZipBuffer);
+            let inputZipFile: string = '';
+            let removeInputZipFileAfterSigning = false;
+            if (this._inputZipFilePath) {
+                inputZipFile = this._inputZipFilePath;
+            } else if (this._inputZipBuffer) {
+                inputZipFile = path.join(tmpDownloadDir, 'unsigned_ext.zip');
+                await fs.writeFile(inputZipFile, this._inputZipBuffer);
+                removeInputZipFileAfterSigning = true;
+            }
+
             try {
                 const signAddonOptions: ISignAddonOptions = {
                     id: this._options.signXpi.extensionId,
@@ -150,25 +182,37 @@ export class FirefoxAddonsBuilder
 
                 this._logWrapper.info(`Signing '${inputZipFile}'...`);
 
-                const signResult = await signAddon(signAddonOptions);
-                this.validateSignResult(signResult, this._options.signXpi.extensionId || '');
+                try {
+                    const signResult = await signAddon(signAddonOptions);
 
-                result.getAssets().signedExtStoreId = new FirefoxAddonsExtIdAsset(signResult.id);
+                    this.validateSignResult(signResult, this._options.signXpi.extensionId || '');
 
-                const srcXpiFile = signResult.downloadedFiles[0];
-                if (this._outSignedXpiBufferRequired) {
-                    result.getAssets().signedXpiBuffer = new BufferBuildAsset(await fs.readFile(srcXpiFile));
+                    result.getAssets().signedExtStoreId = new FirefoxAddonsExtIdAsset(signResult.id);
+
+                    const srcXpiFile = signResult.downloadedFiles[0];
+                    if (this._outSignedXpiBufferRequired) {
+                        result.getAssets().signedXpiBuffer = new BufferBuildAsset(await fs.readFile(srcXpiFile));
+                    }
+
+                    if (this._outSignedXpiFileRequirement !== undefined) {
+                        result.getAssets().signedXpiFile = await this.getXpiFileBuildAsset(
+                            srcXpiFile,
+                            this._outSignedXpiFileRequirement,
+                            this._options.signXpi.xpiOutPath
+                        );
+                    }
+                } catch (err) {
+                    const errObj = err as any;
+                    if (errObj?.errorCode === 'SERVER_FAILURE' && errObj?.errorDetails.includes('already exists')) {
+                        throw new VersionAlreadyExistsError(this._inputManifest.version);
+                    }
+                    throw err;
                 }
 
-                if (this._outSignedXpiFileRequirement !== undefined) {
-                    result.getAssets().signedXpiFile = await this.getXpiFileBuildAsset(
-                        srcXpiFile,
-                        this._outSignedXpiFileRequirement,
-                        this._options.signXpi.xpiOutPath
-                    );
-                }
             } finally {
-                await fs.unlink(inputZipFile);
+                if (removeInputZipFileAfterSigning) {
+                    await fs.unlink(inputZipFile);
+                }
             }
         } finally {
             await fs.rmdir(tmpDownloadDir);
@@ -196,8 +240,14 @@ export class FirefoxAddonsBuilder
 
     protected validateInputs() {
         const errors = [];
-        if (!this._inputZipBuffer) {
-            errors.push("zip buffer isn't specified");
+        if (!this._inputZipBuffer && !this._inputZipFilePath) {
+            errors.push("Either zip buffer or zip file path must be specified");
+        }
+        if (this._inputZipBuffer && this._inputZipFilePath) {
+            errors.push("Ambiguity zip source: both zip buffer and zip file path inputs are set");
+        }
+        if (this._inputSourcesZipFilePath && this._inputSourcesZipBuffer) {
+            errors.push("Ambiguity sources zip input: both sources zip buffer and sources zip file path inputs are set");
         }
         if (errors.length > 0) {
             throw Error('Inputs validation error: ' + errors.join(', '));
@@ -210,7 +260,7 @@ export class FirefoxAddonsBuilder
             if (signResult.errorCode === 'SERVER_FAILURE' &&
                 signResult.errorDetails?.includes('Version already exists')
             ) {
-                throw new SameVersionAlreadyUploadedError(version, signResult.errorDetails);
+                throw new VersionAlreadyExistsError(version, signResult.errorDetails);
             }
             throw new Error('Signing error');
         }

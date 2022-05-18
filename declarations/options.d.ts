@@ -1,3 +1,5 @@
+export type UploadChannel = 'unlisted'|'listed';
+
 export interface ISignAddonLibOptions {
     /**
      * @default "https://addons.mozilla.org/api/v3"
@@ -65,6 +67,11 @@ export interface IFirefoxAddonsOptions {
          * Id of extension which was already uploaded to Firefox Addons
          */
         extensionId: string;
+        /**
+         * The version channel, which determines its visibility on the site. Can be either unlisted or listed
+         * @default 'listed'
+         */
+        channel?: UploadChannel;
         /**
          * Number of milliseconds to wait until uploaded item becomes processed
          * Throw PollTimedOutError in case of timeout

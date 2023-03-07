@@ -18,6 +18,7 @@ import {deployAddon} from "./addonsApi/deployAddon";
 import {VersionAlreadyExistsError} from "./errors/VersionAlreadyExistsError";
 import assert = require("assert");
 import {AddonsApiError} from "./errors/AddonsApiError";
+import {RequestThrottled} from "./errors/RequestThrottled";
 
 // noinspection JSUnusedGlobalSymbols
 /**
@@ -204,17 +205,7 @@ export class FirefoxAddonsBuilder
                     }
                 } catch (err) {
                     this._logWrapper.error(String(err))
-                    const errObj = err as any;
-                    if (typeof errObj === 'object' &&
-                        this.isVersionAlreadyExistsSignError(errObj.errorCode, errObj.errorDetails)
-                    ) {
-                        throw new VersionAlreadyExistsError(
-                            undefined,
-                            this._inputManifest.version,
-                            undefined
-                        );
-                    }
-                    throw err;
+                    throw err
                 }
 
             } finally {
@@ -262,18 +253,25 @@ export class FirefoxAddonsBuilder
         }
     }
 
-    protected isVersionAlreadyExistsSignError(errorCode: string, errorDetails: string|undefined): boolean {
-        return errorCode === 'SERVER_FAILURE' &&
+    protected throwKnownSignError(errorCode: string, errorDetails: string|undefined, version: string) {
+        if (errorCode === 'SERVER_FAILURE' &&
             errorDetails !== undefined &&
             errorDetails.includes('already exists')
+        ) {
+            throw new VersionAlreadyExistsError(errorDetails, version, undefined);
+        }
+        if (errorCode === 'SERVER_FAILURE' &&
+            errorDetails !== undefined &&
+            errorDetails.includes('(status: 429)')
+        ) {
+            throw new RequestThrottled(errorDetails, version, undefined)
+        }
     }
 
     protected validateSignResult(signResult: ISigningResult, version: string) {
         if (!signResult.success) {
             this._logWrapper.error('Signing error', signResult);
-            if (this.isVersionAlreadyExistsSignError(signResult.errorCode, signResult.errorDetails)) {
-                throw new VersionAlreadyExistsError(signResult.errorDetails, version, undefined);
-            }
+            this.throwKnownSignError(signResult.errorCode, signResult.errorDetails, version)
             throw new AddonsApiError('Signing error', version, undefined);
         }
 

@@ -47,6 +47,8 @@ export async function addonsUploadArchive(
                         undefined,
                         undefined
                     );
+                case 429:
+                    throw new UnauthorizedError(requestErr.response.text, undefined, undefined);
                 default:
                     throw new Error(
                         'Upload failed: Status ' +
@@ -84,6 +86,8 @@ export async function addonsGetUploadDetails(
                         undefined,
                         uuid
                     );
+                case 429:
+                    throw new UnauthorizedError(requestErr.response.text, undefined, uuid);
                 default:
                     throw new AddonsApiError(
                         'Polling failed: Status ' + requestErr.response.status + ': ' + requestErr.response.text,
@@ -140,6 +144,9 @@ export async function addonsCreateVersion(
                             uploadId
                         );
                     }
+                    break;
+                case 429:
+                    throw new UnauthorizedError(requestErr.response.text, uploadVersion, uploadId);
             }
             throw new AddonsApiError(
                 `Version creating failed: Status ${requestErr.response.status}: ${requestErr.response.text}`,

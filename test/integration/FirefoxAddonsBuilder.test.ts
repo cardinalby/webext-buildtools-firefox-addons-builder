@@ -25,6 +25,7 @@ describe('FirefoxAddonsBuilder', () => {
     });
 
     it('should try to deploy', async () => {
+        jest.resetModules()
         const builder = new FirefoxAddonsBuilder({
             api: {
                 jwtIssuer: process.env.JWT_ISSUER || '',
@@ -51,6 +52,7 @@ describe('FirefoxAddonsBuilder', () => {
     });
 
     it('should try to sign', async () => {
+        jest.resetModules()
         const builder = new FirefoxAddonsBuilder({
             api: {
                 jwtIssuer: process.env.JWT_ISSUER || '',

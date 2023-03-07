@@ -27,13 +27,17 @@ export async function deployAddon(
             ? options.pollTimeoutMs - duration.measureMs()
             : undefined;
         if (timeLeft !== undefined && timeLeft <= 0) {
-            throw new PollTimedOutError(uploadId, 'Polling timed out');
+            throw new PollTimedOutError('Polling timed out', uploadId);
         }
         uploadDetails = await addonsGetUploadDetails(jwtToken, uploadId, timeLeft);
         if (uploadDetails.processed) {
             logger.info('Item was processed. ', uploadDetails);
             if (!uploadDetails.valid) {
-                throw new ValidationError('Validation failed: ' + JSON.stringify(uploadDetails.validation));
+                throw new ValidationError(
+                    'Validation failed: ' + JSON.stringify(uploadDetails.validation),
+                    uploadDetails.version,
+                    uploadDetails.uuid
+                    );
             }
             break;
         }

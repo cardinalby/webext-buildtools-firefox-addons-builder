@@ -1,12 +1,15 @@
-export class VersionAlreadyExistsError extends Error {
-    private readonly _version: string;
+import {AddonsApiError} from "./AddonsApiError";
 
-    constructor(version: string, message?: string) {
-        super(message || `Extension version ${version} is already uploaded`);
-        this._version = version;
-    }
-
-    get version(): string {
-        return this._version;
+export class VersionAlreadyExistsError extends AddonsApiError {
+    constructor(
+        message: string|undefined,
+        public readonly version: string|undefined,
+        public readonly uploadId: string|undefined
+    ) {
+        super(
+            message || `Extension version ${version} is already uploaded`,
+            version,
+            uploadId
+        );
     }
 }

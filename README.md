@@ -108,6 +108,10 @@ Package exports the following error classes, which can be thrown:
 * `PollTimedOutError` For "Deployed extension" output. Polling uploaded item status was timed out.
 Your extension will be probably published later.
 
+All these custom errors have `AddonsApiError` base class that contain the following properties:
+- `version: string|undefined`: extension version if known at the moment error occurred
+- `uploadId: string|undefined`: id of upload if known at the moment error occurred
+
 ## References
 
 If you are interested in building CI/CD solution for Web Extension using GitHub Actions it's better

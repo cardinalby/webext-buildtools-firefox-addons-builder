@@ -39,9 +39,14 @@ describe('FirefoxAddonsBuilder', () => {
         builder.setInputSourcesZipFilePath(zipFilePath);
         builder.requireDeployedExt();
         await expect(async () => {
-            const res = await builder.build();
-            console.log(res);
-            return res;
+            try {
+                const res = await builder.build();
+                console.log(res);
+                return res;
+            } catch (err) {
+                console.log(err)
+                throw err
+            }
         }).rejects.toBeInstanceOf(VersionAlreadyExistsError);
     });
 

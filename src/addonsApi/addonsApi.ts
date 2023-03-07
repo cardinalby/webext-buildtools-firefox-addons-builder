@@ -7,6 +7,7 @@ import {DeployResultInterface} from "./interfaces/DeployResultInterface";
 import * as fs from "fs";
 import {PollTimedOutError} from "../errors/PollTimedOutError";
 import {UploadChannel} from "../../declarations/options";
+import {AddonsApiError} from "../errors/AddonsApiError";
 
 const baseUrl = 'https://addons.mozilla.org/api/v5/addons/';
 
@@ -42,7 +43,9 @@ export async function addonsUploadArchive(
             switch (requestErr?.response?.status) {
                 case 401:
                     throw new UnauthorizedError(
-                        'Upload failed: 401 Unauthorized: ' + requestErr.response.text
+                        'Upload failed: 401 Unauthorized: ' + requestErr.response.text,
+                        undefined,
+                        undefined
                     );
                 default:
                     throw new Error(
@@ -72,21 +75,24 @@ export async function addonsGetUploadDetails(
         if (err instanceof Error) {
             const requestErr = err as any;
             if (requestErr.timeout) {
-                throw new PollTimedOutError(uuid, 'Polling timed out');
+                throw new PollTimedOutError('Polling timed out', uuid);
             }
             switch (requestErr?.response?.status) {
                 case 401:
                     throw new UnauthorizedError(
-                        'Polling failed: 401 Unauthorized: ' + requestErr.response.text
+                        'Polling failed: 401 Unauthorized: ' + requestErr.response.text,
+                        undefined,
+                        uuid
                     );
                 default:
-                    throw new Error(
-                        'Polling failed: Status ' +
-                        requestErr.response.status + ': ' + requestErr.response.text
+                    throw new AddonsApiError(
+                        'Polling failed: Status ' + requestErr.response.status + ': ' + requestErr.response.text,
+                        undefined,
+                        uuid
                     );
             }
         }
-        throw new Error(String(err));
+        throw new AddonsApiError(String(err), undefined, uuid);
     }
 }
 
@@ -94,7 +100,7 @@ export async function addonsCreateVersion(
     jwt: string,
     extensionId: string,
     uploadId: string,
-    uploadVersion?: string,
+    uploadVersion: string,
     sourcesZip?: Buffer|fs.ReadStream
 ): Promise<DeployResultInterface> {
     try {
@@ -119,24 +125,28 @@ export async function addonsCreateVersion(
             switch (requestErr?.response?.status) {
                 case 401:
                     throw new UnauthorizedError(
-                        'Version creating failed: 401 Unauthorized: ' + requestErr.response.text
+                        'Version creating failed: 401 Unauthorized: ' + requestErr.response.text,
+                        uploadVersion,
+                        uploadId
                     );
-                case 400:
+                case 409:
                     if (Array.isArray(requestErr?.response?.body?.version) &&
                         requestErr?.response?.body?.version.length > 0 &&
                         requestErr?.response?.body?.version[0].includes('already exists')
                     ) {
                         throw new VersionAlreadyExistsError(
-                            uploadVersion || 'unknown', requestErr.response.text
+                            requestErr.response.text,
+                            uploadVersion,
+                            uploadId
                         );
                     }
-                    throw new Error('Version creating failed: Status 400: ' + requestErr.response.text);
-                default:
-                    throw new Error(
-                        'Version creating failed: Status ' +
-                        requestErr.response.status + ': ' + requestErr.response.text);
             }
+            throw new AddonsApiError(
+                `Version creating failed: Status ${requestErr.response.status}: ${requestErr.response.text}`,
+                uploadVersion,
+                uploadId
+            );
         }
-        throw new Error(String(err));
+        throw new AddonsApiError(String(err), uploadVersion, uploadId);
     }
 }

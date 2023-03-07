@@ -18,6 +18,7 @@ import { FirefoxAddonsBuildResult, FirefoxAddonsExtIdAsset } from './buildResult
 import {deployAddon} from "./addonsApi/deployAddon";
 import {VersionAlreadyExistsError} from "./errors/VersionAlreadyExistsError";
 import assert = require("assert");
+import {AddonsApiError} from "./errors/AddonsApiError";
 
 // noinspection JSUnusedGlobalSymbols
 /**
@@ -203,8 +204,14 @@ export class FirefoxAddonsBuilder
                     }
                 } catch (err) {
                     const errObj = err as any;
-                    if (errObj?.errorCode === 'SERVER_FAILURE' && errObj?.errorDetails.includes('already exists')) {
-                        throw new VersionAlreadyExistsError(this._inputManifest.version);
+                    if (typeof errObj === 'object' &&
+                        this.isVersionAlreadyExistsSignError(errObj.errorCode, errObj.errorDetails)
+                    ) {
+                        throw new VersionAlreadyExistsError(
+                            undefined,
+                            this._inputManifest.version,
+                            undefined
+                        );
                     }
                     throw err;
                 }
@@ -254,19 +261,23 @@ export class FirefoxAddonsBuilder
         }
     }
 
+    protected isVersionAlreadyExistsSignError(errorCode: string, errorDetails: string|undefined): boolean {
+        return errorCode === 'SERVER_FAILURE' &&
+            errorDetails !== undefined &&
+            errorDetails.includes('already exists')
+    }
+
     protected validateSignResult(signResult: ISigningResult, version: string) {
         if (!signResult.success) {
             this._logWrapper.error('Signing error', signResult);
-            if (signResult.errorCode === 'SERVER_FAILURE' &&
-                signResult.errorDetails?.includes('Version already exists')
-            ) {
-                throw new VersionAlreadyExistsError(version, signResult.errorDetails);
+            if (this.isVersionAlreadyExistsSignError(signResult.errorCode, signResult.errorDetails)) {
+                throw new VersionAlreadyExistsError(signResult.errorDetails, version, undefined);
             }
-            throw new Error('Signing error');
+            throw new AddonsApiError('Signing error', version, undefined);
         }
 
         if (signResult.downloadedFiles.length === 0) {
-            throw new Error('Unexpected error, no files downloaded');
+            throw new AddonsApiError('Unexpected error, no files downloaded', version, undefined);
         }
         this._logWrapper.info(`Signed, your extension ID is: ${signResult.id}`);
         this._logWrapper.info('Signed, downloaded files: ' + signResult.downloadedFiles.join(', '));

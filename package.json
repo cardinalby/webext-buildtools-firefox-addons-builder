@@ -1,6 +1,6 @@
 {
   "name": "webext-buildtools-firefox-addons-builder",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "webext-buildtools builder for deploying to Firefox Addons store and signing xpi files",
   "main": "dist",
   "keywords": [
@@ -51,9 +51,6 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "jest",
-    "prepare": "npm run build",
-    "version": "git add -A src",
-    "postversion": "git push && git push --tags"
+    "test": "jest"
   }
 }

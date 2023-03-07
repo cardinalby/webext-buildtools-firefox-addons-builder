@@ -2,7 +2,6 @@
 
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import { signAddon } from 'sign-addon';
 import { ISignAddonOptions, ISigningResult } from 'sign-addon';
 import { ISimpleBuilder } from 'webext-buildtools-builder-types';
 import {
@@ -184,6 +183,7 @@ export class FirefoxAddonsBuilder
                 this._logWrapper.info(`Signing '${inputZipFile}'...`);
 
                 try {
+                    const signAddon = (await import('sign-addon')).signAddon
                     const signResult = await signAddon(signAddonOptions);
 
                     this.validateSignResult(signResult, this._options.signXpi.extensionId || '');
@@ -203,6 +203,7 @@ export class FirefoxAddonsBuilder
                         );
                     }
                 } catch (err) {
+                    this._logWrapper.error(String(err))
                     const errObj = err as any;
                     if (typeof errObj === 'object' &&
                         this.isVersionAlreadyExistsSignError(errObj.errorCode, errObj.errorDetails)

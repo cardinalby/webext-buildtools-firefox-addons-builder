@@ -1,8 +1,7 @@
 module.exports = {
     preset: 'ts-jest',
-
     transform: {
-        "^.+\\.(t|j)sx?$": "ts-jest"
+        "^.+\\.(t|j)sx?$": ["ts-jest", { useESM: true }]
     },
     moduleDirectories: [
         "node_modules",

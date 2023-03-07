@@ -1,4 +1,4 @@
-name: npm-publish
+name: test
 on:
   push:
     branches:
@@ -11,11 +11,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@master
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
-          node-version: 16.x
-          registry-url: https://registry.npmjs.org/
-      - run: npm install
+          node-version: 18
+      - run: npm ci
+      - run: npm build
       - run: npm test
         env:
           EXTENSION_ID: ${{secrets.EXTENSION_ID}}

@@ -16,7 +16,6 @@ import { IFirefoxAddonsOptions } from '../declarations/options';
 import { FirefoxAddonsBuildResult, FirefoxAddonsExtIdAsset } from './buildResult';
 import {deployAddon} from "./addonsApi/deployAddon";
 import {VersionAlreadyExistsError} from "./errors/VersionAlreadyExistsError";
-import assert = require("assert");
 import {AddonsApiError} from "./errors/AddonsApiError";
 import {RequestThrottled} from "./errors/RequestThrottled";
 
@@ -32,6 +31,8 @@ export class FirefoxAddonsBuilder
 
     protected _inputZipBuffer?: Buffer;
     protected _inputZipFilePath?: string;
+    // Id of already existing upload to be polled and published
+    protected _uploadId?: string;
     protected _inputSourcesZipBuffer?: Buffer;
     protected _inputSourcesZipFilePath?: string;
     protected _inputManifest?: IManifestObject;
@@ -52,6 +53,15 @@ export class FirefoxAddonsBuilder
     // noinspection JSUnusedGlobalSymbols
     public setInputZipFilePath(filePath: string): this {
         this._inputZipFilePath = filePath;
+        return this;
+    }
+
+    // noinspection JSUnusedGlobalSymbols
+    /**
+     * Id of already existing upload to be polled and published
+     */
+    public setInputUploadId(uploadId: string): this {
+        this._uploadId = uploadId;
         return this;
     }
 
@@ -77,7 +87,7 @@ export class FirefoxAddonsBuilder
 
     // noinspection JSUnusedGlobalSymbols
     /**
-     * setInputBuffer(), setInputManifest() should be called before build()
+     * setInputZipBuffer() or setInputZipFilePath() or setInputUploadId() should be called before build()
      */
     public requireDeployedExt(): this {
         this._outDeployedExtRequired = true;
@@ -86,7 +96,7 @@ export class FirefoxAddonsBuilder
 
     // noinspection JSUnusedGlobalSymbols
     /**
-     * setInputBuffer(), setInputManifest() should be called before build()
+     * setInputZipBuffer() or setInputZipFilePath(), setInputManifest() should be called before build()
      */
     public requireSignedXpiFile(temporary: boolean = false): this {
         this._outSignedXpiFileRequirement = temporary;
@@ -95,7 +105,7 @@ export class FirefoxAddonsBuilder
 
     // noinspection JSUnusedGlobalSymbols
     /**
-     * setInputBuffer(), setInputManifest() should be called before build()
+     * setInputZipBuffer() or setInputZipFilePath(), setInputManifest() should be called before build()
      */
     public requireSignedXpiBuffer(): this {
         this._outSignedXpiBufferRequired = true;
@@ -129,13 +139,13 @@ export class FirefoxAddonsBuilder
         if (this._outDeployedExtRequired && this._options.deploy) {
             const addonZip = (this._inputZipFilePath && fs.createReadStream(this._inputZipFilePath)) ||
                 this._inputZipBuffer;
-            assert(addonZip);
             const deployResult = await deployAddon({
                 id: this._options.deploy.extensionId,
                 channel: this._options.deploy.channel || 'listed',
                 issuer: this._options.api.jwtIssuer,
                 secret: this._options.api.jwtSecret,
                 addonZip: addonZip,
+                uploadId: this._uploadId,
                 addonSourcesZip:
                     (this._inputSourcesZipFilePath && fs.createReadStream(this._inputSourcesZipFilePath)) ||
                     this._inputSourcesZipBuffer
@@ -239,12 +249,15 @@ export class FirefoxAddonsBuilder
 
     protected validateInputs() {
         const errors = [];
-        if (!this._inputZipBuffer && !this._inputZipFilePath) {
-            errors.push("Either zip buffer or zip file path must be specified");
+        let zipInputs = (this._inputZipBuffer !== undefined ? 1 : 0) +
+            (this._inputZipFilePath !== undefined ? 1 : 0) +
+            (this._uploadId !== undefined ? 1 : 0);
+        if (zipInputs == 0) {
+            errors.push("zipBuffer, zipFile ot uploadId must be specified");
+        } else if (zipInputs > 1) {
+            errors.push("Ambiguity source: only one of zipBuffer, zipFile or uploadId should be specified");
         }
-        if (this._inputZipBuffer && this._inputZipFilePath) {
-            errors.push("Ambiguity zip source: both zip buffer and zip file path inputs are set");
-        }
+
         if (this._inputSourcesZipFilePath && this._inputSourcesZipBuffer) {
             errors.push("Ambiguity sources zip input: both sources zip buffer and sources zip file path inputs are set");
         }

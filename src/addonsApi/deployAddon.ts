@@ -5,6 +5,7 @@ import {Duration} from "./Duration";
 import {PollTimedOutError} from "../errors/PollTimedOutError";
 import {LoggerWrapper} from "webext-buildtools-utils";
 import {addonsCreateJwt, addonsCreateVersion, addonsGetUploadDetails, addonsUploadArchive} from "./addonsApi";
+import {UploadResponseInterface} from "./interfaces/UploadResponseInterface";
 
 const POLLING_PERIOD_MS = 15000;
 
@@ -18,10 +19,22 @@ export async function deployAddon(
 ): Promise<DeployResultInterface> {
     const jwtToken = () => addonsCreateJwt(options.issuer, options.secret);
 
-    logger.info(`Uploading zip file...`);
-    let uploadDetails = await addonsUploadArchive(jwtToken(), options.addonZip, options.channel)
-    logger.info('Upload response:', uploadDetails);
-    const uploadId = uploadDetails.uuid;
+    let version: string|undefined = undefined
+    let uploadId: string
+    let uploadDetails: UploadResponseInterface
+    if (options.uploadId === undefined) {
+        if (options.addonZip === undefined) {
+            throw new Error('options.uploadId and options.addonZip are undefined')
+        }
+        logger.info(`Uploading zip file...`);
+        uploadDetails = await addonsUploadArchive(jwtToken(), options.addonZip, options.channel)
+        logger.info('Upload response:', uploadDetails);
+        uploadId = uploadDetails.uuid;
+        version = uploadDetails.version;
+    } else {
+        uploadId = options.uploadId
+        logger.info(`Use passed ${uploadId} upload id instead of uploading`);
+    }
 
     const duration = Duration.startMeasuring();
     while (true) {
@@ -29,10 +42,10 @@ export async function deployAddon(
             ? options.pollTimeoutMs - duration.measureMs()
             : undefined;
         if (timeLeft !== undefined && timeLeft <= 0) {
-            throw new PollTimedOutError('Polling timed out', uploadDetails.version, uploadId);
+            throw new PollTimedOutError('Polling timed out', version, uploadId);
         }
         logger.info('Polling upload details...');
-        uploadDetails = await addonsGetUploadDetails(jwtToken(), uploadId, uploadDetails.version, timeLeft);
+        uploadDetails = await addonsGetUploadDetails(jwtToken(), uploadId, version, timeLeft);
         if (uploadDetails.processed) {
             logger.info('Item was processed. ', uploadDetails);
             if (!uploadDetails.valid) {

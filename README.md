@@ -46,7 +46,7 @@ You can create them at [https://addons.mozilla.org/en-US/developers/addon/api/ke
 
 ## Inputs
 
-### 🔸 _extension archive_; **Required**
+### 🔸 _extension zip archive_; **Required**
 Can be set using one of the following inputs:
 
 #### 1. `setInputZipBuffer(buffer: Buffer)`
@@ -55,7 +55,11 @@ Buffer with zipped extension dir.
 #### 2. `setInputZipFilePath(filePath: string)`
 Buffer with zipped extension dir.
 
-### 🔹 `setInputManifest(...)`
+#### 3. `setInputUploadId(uploadId: string)` _**Only for "Deployed extension" output**_
+Id of existing upload. Can be used if uploading succeeded at the previous try, but polling failed by timeout
+and version hasn't been published.
+
+### 🔹 `setInputManifest(...)` _**Only for "Signed xpi" output**_
 Object with parsed extension's `package.json`. Will be extracted from zip if not specified.
 
 ### 🔹 _sources archive_

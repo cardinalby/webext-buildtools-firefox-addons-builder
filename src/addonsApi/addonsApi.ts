@@ -63,7 +63,7 @@ export async function addonsUploadArchive(
 export async function addonsGetUploadDetails(
     jwt: string,
     uuid: string,
-    version: string, // for including in errors
+    version: string|undefined, // for including in errors
     timeout?: number
 ): Promise<UploadResponseInterface> {
     try {

@@ -27,7 +27,6 @@ const builder = new FirefoxAddonsBuilder(options, logMethod);
 
 // Optional, can be extracted from zip
 builder.setInputManifest(await fs.readJson('./ext_dir/package.json'));
-
 builder.setInputZipBuffer(await fs.read('./packed.zip'));
 
 builder.requireDeployedExt();
@@ -107,6 +106,7 @@ Package exports the following error classes, which can be thrown:
 * `ValidationError` For "Deployed extension" output. Firefox Addons validation rejected your extension
 * `PollTimedOutError` For "Deployed extension" output. Polling uploaded item status was timed out.
 Your extension will be probably published later.
+* `RequestThrottled` API request were declined because you reached the request frequency limit.
 
 All these custom errors have `AddonsApiError` base class that contain the following properties:
 - `version: string|undefined`: extension version if known at the moment error occurred
@@ -126,4 +126,3 @@ To read what are *webext-buildtools* and *builders* go to
 [webext-buildtools-builder-types](https://github.com/cardinalby/webext-buildtools-builder-types) repo.
 
 [sign-addon](https://www.npmjs.com/package/sign-addon) package is used for signing under the hood.
-

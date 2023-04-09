@@ -10,4 +10,5 @@ export {UnauthorizedError} from './errors/UnauthorizedError';
 export {ValidationError} from './errors/ValidationError';
 export {VersionAlreadyExistsError} from './errors/VersionAlreadyExistsError';
 export {PollTimedOutError} from './errors/PollTimedOutError';
+export {RequestThrottled} from './errors/RequestThrottled'
 

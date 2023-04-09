@@ -29,10 +29,10 @@ export async function deployAddon(
             ? options.pollTimeoutMs - duration.measureMs()
             : undefined;
         if (timeLeft !== undefined && timeLeft <= 0) {
-            throw new PollTimedOutError('Polling timed out', uploadId);
+            throw new PollTimedOutError('Polling timed out', uploadDetails.version, uploadId);
         }
         logger.info('Polling upload details...');
-        uploadDetails = await addonsGetUploadDetails(jwtToken(), uploadId, timeLeft);
+        uploadDetails = await addonsGetUploadDetails(jwtToken(), uploadId, uploadDetails.version, timeLeft);
         if (uploadDetails.processed) {
             logger.info('Item was processed. ', uploadDetails);
             if (!uploadDetails.valid) {

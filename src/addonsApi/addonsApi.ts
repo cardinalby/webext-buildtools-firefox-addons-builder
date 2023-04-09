@@ -63,6 +63,7 @@ export async function addonsUploadArchive(
 export async function addonsGetUploadDetails(
     jwt: string,
     uuid: string,
+    version: string, // for including in errors
     timeout?: number
 ): Promise<UploadResponseInterface> {
     try {
@@ -77,26 +78,26 @@ export async function addonsGetUploadDetails(
         if (err instanceof Error) {
             const requestErr = err as any;
             if (requestErr.timeout) {
-                throw new PollTimedOutError('Polling timed out', uuid);
+                throw new PollTimedOutError('Polling timed out', version, uuid);
             }
             switch (requestErr?.response?.status) {
                 case 401:
                     throw new UnauthorizedError(
                         'Polling failed: 401 Unauthorized: ' + requestErr.response.text,
-                        undefined,
+                        version,
                         uuid
                     );
                 case 429:
-                    throw new UnauthorizedError(requestErr.response.text, undefined, uuid);
+                    throw new UnauthorizedError(requestErr.response.text, version, uuid);
                 default:
                     throw new AddonsApiError(
                         'Polling failed: Status ' + requestErr.response.status + ': ' + requestErr.response.text,
-                        undefined,
+                        version,
                         uuid
                     );
             }
         }
-        throw new AddonsApiError(String(err), undefined, uuid);
+        throw new AddonsApiError(String(err), version, uuid);
     }
 }
 

@@ -9,7 +9,7 @@ import {PollTimedOutError} from "../errors/PollTimedOutError";
 import {UploadChannel} from "../../declarations/options";
 import {AddonsApiError} from "../errors/AddonsApiError";
 
-const baseUrl = 'https://addons.mozilla.org/api/v5/addons/';
+export const amoBaseUrl = 'https://addons.mozilla.org/api/v5/'
 
 export function addonsCreateJwt(issuer: string, secret: string): string {
     const issuedAt = Math.floor(Date.now() / 1000);
@@ -30,7 +30,7 @@ export async function addonsUploadArchive(
 ): Promise<UploadResponseInterface> {
     try {
         const requestObj = request
-            .post(baseUrl + 'upload/')
+            .post(amoBaseUrl + 'addons/upload/')
             .set('Authorization', `JWT ${jwt}`)
             .set('Content-Type', 'multipart/form-data')
             .field('channel', channel)
@@ -67,7 +67,7 @@ export async function addonsGetUploadDetails(
     timeout?: number
 ): Promise<UploadResponseInterface> {
     try {
-        const requestObj = request.get(baseUrl + 'upload/' + encodeURIComponent(uuid) + '/')
+        const requestObj = request.get(amoBaseUrl + 'addons/upload/' + encodeURIComponent(uuid) + '/')
             .set('Authorization', `JWT ${jwt}`);
         if (timeout !== undefined) {
             requestObj.timeout(timeout);
@@ -110,8 +110,8 @@ export async function addonsCreateVersion(
 ): Promise<DeployResultInterface> {
     try {
         const requestObj = request
-            .post(baseUrl +
-                'addon/' +
+            .post(amoBaseUrl +
+                'addons/addon/' +
                 encodeURIComponent(extensionId) +
                 '/versions/'
             )

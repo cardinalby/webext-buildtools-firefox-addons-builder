@@ -1,8 +1,8 @@
-///<reference path="../external_declarations/sign-addon.d.ts"/>
+///<reference path="../external_declarations/web-ext.d.ts"/>
 
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import { ISignAddonOptions, ISigningResult } from 'sign-addon';
+import {SignAddonOptions, AddonSignResult} from 'web-ext/util/submit-addon'
 import { ISimpleBuilder } from 'webext-buildtools-builder-types';
 import {
     AbstractSimpleBuilder,
@@ -17,7 +17,7 @@ import { FirefoxAddonsBuildResult, FirefoxAddonsExtIdAsset } from './buildResult
 import {deployAddon} from "./addonsApi/deployAddon";
 import {VersionAlreadyExistsError} from "./errors/VersionAlreadyExistsError";
 import {AddonsApiError} from "./errors/AddonsApiError";
-import {RequestThrottled} from "./errors/RequestThrottled";
+import {amoBaseUrl} from "./addonsApi/addonsApi";
 
 // noinspection JSUnusedGlobalSymbols
 /**
@@ -178,14 +178,20 @@ export class FirefoxAddonsBuilder
             }
 
             try {
-                const signAddonOptions: ISignAddonOptions = {
+                const signAddonOptions: SignAddonOptions = {
+                    amoBaseUrl: amoBaseUrl,
+                    channel: 'unlisted',
                     id: this._options.signXpi.extensionId,
                     xpiPath: inputZipFile,
-                    version: this._inputManifest.version,
                     apiKey: this._options.api.jwtIssuer,
                     apiSecret: this._options.api.jwtSecret,
                     downloadDir: tmpDownloadDir,
-                };
+                    savedIdPath: path.join(tmpDownloadDir, 'saved_id.txt'),
+                    savedUploadUuidPath: path.join(tmpDownloadDir, 'saved_upload_uuid.txt'),
+                }
+                if (this._inputSourcesZipFilePath) {
+                    signAddonOptions.submissionSource = this._inputSourcesZipFilePath
+                }
 
                 if (this._options.signXpi.signAddonLib) {
                     Object.assign(signAddonOptions, this._options.signXpi.signAddonLib);
@@ -194,14 +200,25 @@ export class FirefoxAddonsBuilder
                 this._logWrapper.info(`Signing '${inputZipFile}'...`);
 
                 try {
-                    const signAddon = (await import('sign-addon')).signAddon
-                    const signResult = await signAddon(signAddonOptions);
-
-                    this.validateSignResult(signResult, this._options.signXpi.extensionId || '');
+                    const signAddon = (await import('web-ext/util/submit-addon')).signAddon
+                    let signResult: AddonSignResult
+                    try {
+                        signResult = await signAddon(signAddonOptions)
+                    } catch (err) {
+                        // noinspection ExceptionCaughtLocallyJS
+                        throw this.getSignError(err)
+                    }
+                    if (signResult.downloadedFiles.length === 0) {
+                        // noinspection ExceptionCaughtLocallyJS
+                        throw new AddonsApiError('Unexpected error, no files downloaded',
+                            this._inputManifest.version, undefined);
+                    }
+                    this._logWrapper.info(`Signed, your extension ID is: ${signResult.id}`);
+                    this._logWrapper.info('Signed, downloaded files: ' + signResult.downloadedFiles.join(', '));
 
                     result.getAssets().signedExtStoreId = new FirefoxAddonsExtIdAsset(signResult.id);
 
-                    const srcXpiFile = signResult.downloadedFiles[0];
+                    const srcXpiFile = path.join(tmpDownloadDir, signResult.downloadedFiles[0]);
                     if (this._outSignedXpiBufferRequired) {
                         result.getAssets().signedXpiBuffer = new BufferBuildAsset(await fs.readFile(srcXpiFile));
                     }
@@ -224,7 +241,7 @@ export class FirefoxAddonsBuilder
                 }
             }
         } finally {
-            await fs.rmdir(tmpDownloadDir);
+            await fs.rmdir(tmpDownloadDir, { recursive: true });
         }
     }
 
@@ -266,33 +283,12 @@ export class FirefoxAddonsBuilder
         }
     }
 
-    protected throwKnownSignError(errorCode: string, errorDetails: string|undefined, version: string) {
-        if (errorCode === 'SERVER_FAILURE' &&
-            errorDetails !== undefined &&
-            errorDetails.includes('already exists')
-        ) {
-            throw new VersionAlreadyExistsError(errorDetails, version, undefined);
+    protected getSignError(caught: any): Error {
+        // not reliable/tested
+        if (String(caught).includes('already exists')) {
+            return new VersionAlreadyExistsError(String(caught), this._inputManifest?.version || '', undefined);
         }
-        if (errorCode === 'SERVER_FAILURE' &&
-            errorDetails !== undefined &&
-            errorDetails.includes('(status: 429)')
-        ) {
-            throw new RequestThrottled(errorDetails, version, undefined)
-        }
-    }
-
-    protected validateSignResult(signResult: ISigningResult, version: string) {
-        if (!signResult.success) {
-            this._logWrapper.error('Signing error', signResult);
-            this.throwKnownSignError(signResult.errorCode, signResult.errorDetails, version)
-            throw new AddonsApiError('Signing error', version, undefined);
-        }
-
-        if (signResult.downloadedFiles.length === 0) {
-            throw new AddonsApiError('Unexpected error, no files downloaded', version, undefined);
-        }
-        this._logWrapper.info(`Signed, your extension ID is: ${signResult.id}`);
-        this._logWrapper.info('Signed, downloaded files: ' + signResult.downloadedFiles.join(', '));
+        return new AddonsApiError(String(caught), this._inputManifest?.version || '', undefined);
     }
 
     protected async getXpiFileBuildAsset(

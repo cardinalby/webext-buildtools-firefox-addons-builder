@@ -180,7 +180,7 @@ export class FirefoxAddonsBuilder
             try {
                 const signAddonOptions: SignAddonOptions = {
                     amoBaseUrl: amoBaseUrl,
-                    channel: 'unlisted',
+                    channel: this._options.signXpi.channel || 'unlisted',
                     id: this._options.signXpi.extensionId,
                     xpiPath: inputZipFile,
                     apiKey: this._options.api.jwtIssuer,
@@ -188,13 +188,11 @@ export class FirefoxAddonsBuilder
                     downloadDir: tmpDownloadDir,
                     savedIdPath: path.join(tmpDownloadDir, 'saved_id.txt'),
                     savedUploadUuidPath: path.join(tmpDownloadDir, 'saved_upload_uuid.txt'),
+                    approvalCheckTimeout: this._options.signXpi.approvalCheckTimeoutMs,
+                    validationCheckTimeout: this._options.signXpi.validationCheckTimeoutMs,
                 }
                 if (this._inputSourcesZipFilePath) {
                     signAddonOptions.submissionSource = this._inputSourcesZipFilePath
-                }
-
-                if (this._options.signXpi.signAddonLib) {
-                    Object.assign(signAddonOptions, this._options.signXpi.signAddonLib);
                 }
 
                 this._logWrapper.info(`Signing '${inputZipFile}'...`);

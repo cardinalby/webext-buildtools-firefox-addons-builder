@@ -1,9 +1,5 @@
 export type UploadChannel = 'unlisted'|'listed';
 
-export interface ISignAddonLibOptions {
-    channel?: 'unlisted' | 'listed';
-}
-
 /**
  * Signing for offline dist performs via Firefox Addons API
  */
@@ -42,6 +38,8 @@ export interface IFirefoxAddonsOptions {
         /** Target path for built and signed xpi file. Could be undefined for temporary build output */
         xpiOutPath?: string;
         /** Options for underlying 'signAddon' lib */
-        signAddonLib?: ISignAddonLibOptions;
+        channel?: UploadChannel;
+        approvalCheckTimeoutMs?: number;
+        validationCheckTimeoutMs?: number;
     }
 }

@@ -2,7 +2,7 @@ import { FirefoxAddonsBuilder } from './builder';
 
 export default FirefoxAddonsBuilder;
 
-export {IFirefoxAddonsOptions, ISignAddonLibOptions, UploadChannel} from '../declarations/options';
+export {IFirefoxAddonsOptions, UploadChannel} from '../declarations/options';
 export {FirefoxAddonsBuildResult, FirefoxAddonsExtIdAsset} from './buildResult';
 
 export {AddonsApiError} from './errors/AddonsApiError';
